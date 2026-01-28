@@ -6,6 +6,106 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <nav>
+        <button id="btSubidas">Subida</button>
+        <button id="btVisualizar">Visualizar</button>
+    </nav>
+
+    <section id="subida">
+        <input type="file" id="inputFoto">
+        <button id="btnSubir">Subir foto</button>
+    </section>
+
+    <section id="visualizar" style="
+        display:none;
+        width: 100vw;
+        height: 100vh;
+        cursor: pointer;
+        ">
+        <img id="imagenAleatoria" style="max-width:90%; max-height:90%; pointer-events:none;">
+    </section>
+
+    <script type="module">
+        import { initializeApp } from
+            "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXPpSP7cpS3eaR8-9-DGz4zGjpJeI8UXw",
+            authDomain: "charlie-922ea.firebaseapp.com",
+            projectId: "charlie-922ea",
+            storageBucket: "charlie-922ea.firebasestorage.app",
+            messagingSenderId: "17512795506",
+            appId: "1:17512795506:web:1ef80e61130ac0d7aa21eb",
+            measurementId: "G-FT4V58X2NJ"
+        };
+        const app = initializeApp(firebaseConfig);
+
+        import { getStorage, ref, uploadBytes, getDownloadURL }
+            from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            onSnapshot
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+        
+        const subida = document.getElementById("subida");
+        const visualizar = document.getElementById("visualizar");
+        const btnSubida = document.getElementById("btSubidas");
+        const btnVisualizar = document.getElementById("btVisualizar");
+
+        btnSubida.onclick = () => {
+            subida.style.display = "block";
+            visualizar.style.display = "none";
+        };
+
+        btnVisualizar.onclick = () => {
+            subida.style.display = "none";
+            visualizar.style.display = "block";
+        };
+
+        const input = document.getElementById("inputFoto");
+        const btn = document.getElementById("btnSubir");
+
+        btn.onclick = async () => {
+            const file = input.files[0];
+            if (!file) return alert("Selecciona una imagen");
+
+            const nombreArchivo = Date.now() + "_" + file.name;
+            const storageRef = ref(storage, "fotos/" + nombreArchivo);
+
+            await uploadBytes(storageRef, file);
+
+            const url = await getDownloadURL(storageRef);
+
+            await addDoc(collection(db, "fotos"), {
+                url: url,
+                fecha: new Date()
+            });
+            alert("Foto subida con éxito ✅");
+        };
+        const imagenesRef = collection(db, "fotos");
+        let imagenes = [];
+
+        onSnapshot(imagenesRef, (snapshot) => {
+            imagenes = [];
+
+            snapshot.forEach(doc => {
+                imagenes.push(doc.data().url);
+            });
+
+            console.log("Imágenes cargadas:", imagenes);
+        });
+
+        visualizar.onclick = () => {
+            if (imagenes.length === 0){alert("No hay imágenes para mostrar"); return;};
+            const randomIndex = Math.floor(Math.random() * imagenes.length);
+            document.getElementById("imagenAleatoria").src = imagenes[randomIndex];
+        };
+
+    </script>
+
 </body>
 </html>
